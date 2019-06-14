@@ -127,34 +127,21 @@ void PID_Controller(void)
 {
 
      if(angle_est>0){
-            //if(correction<0 && correction > -2){
-             if(correction < 0){
+                if(correction < 0){
                 duty = correction;     //motor runs on minimum duty cycle of 15, hence offset added
                 set_dutycycle1((-1)* (int)(duty));
                 backward();
-            }
-             /*else
-             {
-                 duty = 10*((correction -1) /100)-28;     //motor runs on minimum duty cycle of 15, hence offset added
-                set_dutycycle1((-1)* (int)(duty));
-                backward();
-             }*/
+             }
 
      }
 
      else{
-           //if(correction>0 && correction < 2)
              if(correction > 0){
                 duty =  correction;
                 set_dutycycle1((int)duty);
                 forward();
             }
-             /*else
-             {
-                 duty =  10*((correction - 1) / 100)+28 ;
-                 set_dutycycle1((int)duty);
-                 forward();
-             }*/
+     
          }
 }
 //timer interrupt overflow set at 20msec
