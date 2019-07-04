@@ -5,11 +5,14 @@
  I2C1SCL PA6
  I2C1SDA PA7 */
 
+// The following code corresponds to the second design of the bot.
+// The first design just has different offsets for sensor calibration and different PID parameters.
+
 #include <stdint.h>
 #include "tm4c123gh6pm.h"
 #include <stdio.h>
-#include<math.h>
-#define SLAVE_ADDR 0x68     /* 0110 1000 */
+#include <math.h>
+#define  SLAVE_ADDR 0x68     /* 0110 1000 */
 
 void init_uart(void);
 double atanb(double x1, double y);
@@ -29,7 +32,6 @@ void delayUs(int n);
 void motor_init(void);
 void pwm_init(void);
 void set_dutycycle1(int i);
-//void set_dutycycle2(int i);
 void forward(void);
 void backward(void);
 void stop(void);
@@ -40,10 +42,10 @@ float axf, ayf, azf, gxf, gyf, gzf, sum;
 int set_flag = 0, set_cnt = 0,flag = 0;
 int var ;
 
-//float dt = 0.01; // 10ms -> timer interrupt rate
+
 float net_ang_val, new_ang_val;
 float bias_ang_val = 0;
-float P[2][2] = {{0,0},{0,0}}; //variance of new_ang
+float P[2][2] = {{0,0},{0,0}};   //variance of new_ang
 float Q_ang = 0.001;
 float Q_bias = 0.003;
 float y = 0;
@@ -59,8 +61,6 @@ int main(void)
 
 {
 
-
-
     I2C3_init();
     timer0A_init();
     init_uart();
@@ -75,41 +75,30 @@ int main(void)
         ay = (int16_t) ((accel_data[2] << 8) | (accel_data[3]));
         az = (int16_t) ((accel_data[4] << 8) | (accel_data[5]));
 
-        //gx = (int16_t) ((accel_data[8] << 8) | (accel_data[9]));
+      //gx = (int16_t) ((accel_data[8] << 8) | (accel_data[9]));
         gy = (int16_t) ((accel_data[10] << 8) | (accel_data[11]));
-        //gz = (int16_t) (accel_data[12] << 8) | (accel_data[13]);
+      //gz = (int16_t) (accel_data[12] << 8) | (accel_data[13]);
+     
+        // Calibration of the sensor by adding / subtracting the offsets
 
-        axf = (((float) ax) / 16384.0); //(2^16bits)/(2+2) in terms of g
-        ayf = (((float) ay) / 16384.0) - 0.136;
-        azf = (((float) az) / 16384.0) - 0.08;
+        axf = (((float) ax) / 16384.0) - 0.04;  //(2^16bits)/(2+2) in terms of g
+        ayf = (((float) ay) / 16384.0) + 0.014;
+        azf = (((float) az) / 16384.0) + 0.07;
 
-        //gxf = ((float) gx / 131.0) + 0.53; // (2^16bits)/(250+250) in dps
-        gyf = ((float) gy / 131.0) + 3.6;
-        //gzf = ((float) gz / 131.0) + 1.05;
+      //gxf = ((float) gx / 131.0) + 0.53; // (2^16bits)/(250+250) in dps
+        gyf = ((float) gy / 131.0)
+      //gzf = ((float) gz / 131.0) + 1.05;
 
 
 
         PID_Controller();
 
-        //to display estimated angle and correction factor on Uart, uncomment the below code
+        //to display estimated angle and correction factor on UART, uncomment the below code
 
 
-         ftoa(correction, buffer, 4);
+        /*ftoa(correction, buffer, 4);
 
         int i = 0;
-        while (buffer[i] != '\0')
-        {
-            while ((UART0_FR_R & 0x20) != 0)
-                ;
-            UART0_DR_R = buffer[i];
-            i++;
-        }
-        while ((UART0_FR_R & 0x20) != 0);
-        UART0_DR_R = '\t';
-
-        /*ftoa(azf, buffer, 5);
-
-        i = 0;
         while (buffer[i] != '\0')
         {
             while ((UART0_FR_R & 0x20) != 0)
@@ -144,6 +133,8 @@ void PID_Controller(void)
      
          }
 }
+
+
 //timer interrupt overflow set at 20msec
 void timer0_handler(void)
 {
@@ -451,59 +442,59 @@ void ftoa(float n, char *res, int afterpoint)
 void init_uart(void)
 {   //use masking for all the initializations if doesn't work
 
-    SYSCTL_RCGC2_R |= 0x01;  //Clock and Enable Port A wrt functionalities
-    SYSCTL_RCGCUART_R |= 0x01;   //Enable and provide Clock to UART0
-    SYSCTL_RCGCGPIO_R |= 0x01;   //Clock to PORTA
-    UART0_CTL_R |= 0x00; //Disable UART for setting purpose
-    UART0_IBRD_R |= 0x08; //For 115200bps 8 = int [ system_clk i.e. 16MHz / (16 * baud_rate)]
-    UART0_FBRD_R |= 0x2C; //For 115200bps 44 = int [(fractional part * 64) + 0.5]
-    UART0_LCRH_R = 0x60; //for 8-bit data size, no FIFO, 1 stop bit, no interrupt, no parity
-    UART0_CTL_R = 0x301; //for en, rxe, txe
-    GPIO_PORTA_DEN_R |= 0x03; //PA0,PA1 digital IO
-    GPIO_PORTA_AFSEL_R |= 0x03; //PA0,PA1 alternate functions rxe, txe
-    GPIO_PORTA_PCTL_R |= 0x11; //PA0 and PA1 pins for UART function
-    GPIO_PORTA_AMSEL_R |= 0x00; //To disable ADC (disabling analog functionality)
+    SYSCTL_RCGC2_R |= 0x01;          //Clock and Enable Port A wrt functionalities
+    SYSCTL_RCGCUART_R |= 0x01;       //Enable and provide Clock to UART0
+    SYSCTL_RCGCGPIO_R |= 0x01;       //Clock to PORTA
+    UART0_CTL_R |= 0x00;             //Disable UART for setting purpose
+    UART0_IBRD_R |= 0x08;            //For 115200bps 8 = int [ system_clk i.e. 16MHz / (16 * baud_rate)]
+    UART0_FBRD_R |= 0x2C;            //For 115200bps 44 = int [(fractional part * 64) + 0.5]
+    UART0_LCRH_R = 0x60;             //for 8-bit data size, no FIFO, 1 stop bit, no interrupt, no parity
+    UART0_CTL_R = 0x301;             //for en, rxe, txe
+    GPIO_PORTA_DEN_R |= 0x03;        //PA0,PA1 digital IO
+    GPIO_PORTA_AFSEL_R |= 0x03;      //PA0,PA1 alternate functions rxe, txe
+    GPIO_PORTA_PCTL_R |= 0x11;       //PA0 and PA1 pins for UART function
+    GPIO_PORTA_AMSEL_R |= 0x00;      //To disable ADC (disabling analog functionality)
 
 }
 
 void pwm_init(void)
 {
-    SYSCTL_RCGC2_R |= 0x00000031;
-    GPIO_PORTE_DIR_R |= 0x0E;
-    GPIO_PORTE_DEN_R |= 0x0E;
-    GPIO_PORTA_DIR_R |= 0x80;
-    GPIO_PORTA_DEN_R |= 0x80;
+    SYSCTL_RCGC2_R |= 0x00000031;            // Enable clock to the necessary ports
+    GPIO_PORTE_DIR_R |= 0x0E;                // Specify the port E pins as output
+    GPIO_PORTE_DEN_R |= 0x0E;                // Provide a digital enable to the portE GPIO pins
+    GPIO_PORTA_DIR_R |= 0x80;                // Specify the port A pins as output
+    GPIO_PORTA_DEN_R |= 0x80;                // Provide digital enable to the portA GPIO pins
 
-    SYSCTL_RCGCPWM_R |= 2;
-    SYSCTL_RCC_R &= ~0x00100000;
-    GPIO_PORTF_LOCK_R = 0x4C4F434B; /* 2) unlock GPIO Port F */
-    GPIO_PORTF_CR_R |= 0x03;
-    GPIO_PORTF_DIR_R |= 0x03;
-    GPIO_PORTF_DEN_R |= 0x03;
-    GPIO_PORTF_AFSEL_R |= 0x01;
-    GPIO_PORTF_PCTL_R &= ~0x0000000F;
-    GPIO_PORTF_PCTL_R |= 0x00000005;
+    SYSCTL_RCGCPWM_R |= 2;                   // Enable clock to the PWM module
+    SYSCTL_RCC_R &= ~0x00100000;             // Use the system clock directly without any frequency division
+    GPIO_PORTF_LOCK_R = 0x4C4F434B;          // unlock GPIO Port F
+    GPIO_PORTF_CR_R |= 0x03;                 // Enable Port F0 and F1 pins at the commit register
+    GPIO_PORTF_DIR_R |= 0x03;                // Specify direction as output for portF pins
+    GPIO_PORTF_DEN_R |= 0x03;                // Digital enable to PF0 and PF1
+    GPIO_PORTF_AFSEL_R |= 0x01;              // Use of Alternate function select as using PWM peripheral instead of GPIO
+    GPIO_PORTF_PCTL_R &= ~0x0000000F;        // Clearing Port control register
+    GPIO_PORTF_PCTL_R |= 0x00000005;         // Assign Bit Field Encoding value to the Port Control Register
 
     GPIO_PORTA_AFSEL_R |= 0x80;
     GPIO_PORTA_PCTL_R &= ~0xF0000000;
     GPIO_PORTA_PCTL_R |= 0x50000000;
 
-    PWM1_1_CTL_R = 0; /* stop counter */
-    PWM1_2_CTL_R = 0; /* stop counter */
+    PWM1_1_CTL_R = 0;                        // stop counter before initialization of certain variables
+    PWM1_2_CTL_R = 0;
 
-    PWM1_1_GENB_R = 0x0000008C;
+    PWM1_1_GENB_R = 0x0000008C;              
     PWM1_2_GENA_R = 0x0000008C;
-    PWM1_1_LOAD_R = 16000;
+    PWM1_1_LOAD_R = 16000;                   // Assign values to the LOAD register in the PWM generators
     PWM1_2_LOAD_R = 16000;
-    PWM1_1_CTL_R = 1;
+    PWM1_1_CTL_R = 1;                        // enable counter after initialization
     PWM1_2_CTL_R = 1;
 
 }
 void set_dutycycle1(int i)
 {
-    i = 14000-i;
-    PWM1_1_CMPA_R = i;
-    PWM1_2_CMPA_R = i;  //different numbers to make both motors equal speed
+    i = 13000-i;                            // Provide an offset when the bot at upright position i.e. angle zero
+    PWM1_1_CMPA_R = i;                      // Assign value to the compare register
+    PWM1_2_CMPA_R = i;
 }
 
 void forward(void)
@@ -539,6 +530,7 @@ void delayMs(int n)
         {
         } /* do nothing for 1 ms */
 }
+
 /* delay n microseconds (16 MHz CPU clock) */
 void delayUs(int n)
 {
@@ -549,10 +541,12 @@ void delayUs(int n)
         {
         } /* do nothing for 1 us */
 }
+
 void EnableInterrupts(void)     // ################### KINDLY EXPLAIN  #################### //
 {
     __asm ("    CPSIE  I\n");
 }
+
 void WaitForInterrupt(void)
 {
     __asm ("    WFI\n");
