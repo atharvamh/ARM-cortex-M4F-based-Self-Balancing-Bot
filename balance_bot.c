@@ -153,11 +153,7 @@ void timer0_handler(void)
 
     yz = (double) sqrt(ayf * ayf + azf * azf);
     accel_angle = 0.8* accel_angle + 0.2 * atan2((double) (axf), yz) * 180 / 3.141592 ;
-
-
-
-
-
+ 
     prev_angle = angle_est;
     angle_est = ((0.99) * (angle_est - (double) (gyf * dt)) + (0.01 * accel_angle));   //Complementary filter
 
