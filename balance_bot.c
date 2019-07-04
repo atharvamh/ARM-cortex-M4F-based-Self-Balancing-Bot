@@ -128,7 +128,7 @@ void PID_Controller(void)
 
      if(angle_est>0){
                 if(correction < 0){
-                duty = correction;     //motor runs on minimum duty cycle of 15, hence offset added
+                duty = correction;
                 set_dutycycle1((-1)* (int)(duty));
                 backward();
              }
