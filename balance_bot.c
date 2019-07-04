@@ -226,7 +226,7 @@ void I2C3_init(void)
 
 void MPU6050_init(void)  // Why writing those values MDR_R ?  ### Link: https://www.invensense.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf
 {
-    I2C3_byteWrite(SLAVE_ADDR, 0x6B, 0x01); // clock 8 mhz pll with x axis gyro reference ????????????????
+    I2C3_byteWrite(SLAVE_ADDR, 0x6B, 0x01); // clock 8 mhz pll with x axis gyro reference
     delayMs(100);
     I2C3_byteWrite(SLAVE_ADDR, 0x68, 0x06); // signal path reset (resets the sensor path of accelerometer and gyroscope)
     delayMs(100);
@@ -241,7 +241,7 @@ void MPU6050_init(void)  // Why writing those values MDR_R ?  ### Link: https://
     I2C3_byteWrite(SLAVE_ADDR, 0x1C, 0x00); // +/- 2g  accelerometer configuration
     delayMs(100);
 }
-void timer0A_init(void)    // #################    KINDLY EXPLAIN     ###################### //
+void timer0A_init(void)
 {
     SYSCTL_RCGCTIMER_R |= 1;
     TIMER0_CTL_R = 0;  // DISABLE TIMER
