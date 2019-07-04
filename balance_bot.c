@@ -147,7 +147,8 @@ void PID_Controller(void)
 //timer interrupt overflow set at 20msec
 void timer0_handler(void)
 {
-    int Kp = 2500, Ki = 5000, Kd = 30;        // 45,0.01,0.1 // ki = 500,1000,5000 // kd =30
+    int Kp = 2500, Ki = 5000, Kd = 100;        // Design 1 - Kp = 2500, Ki = 5000, Kd = 30
+                                              // Design 2 - Kp = 2500, Ki = 1500, Kd = 100
     double present_error,dt = 0.02;   //dt=20msec which timer overflow interrupt
     TIMER0_ICR_R = 0x1;  //clear timeout
 
